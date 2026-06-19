@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SafeHome Kitchen Monitor — Dashboard</title>
+<style>
+  :root { --bg:#0f1720; --card:#1b2733; --txt:#e6edf3; --muted:#8b98a5; --ok:#2ecc71; --warn:#f1c40f; --emg:#e74c3c; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--txt); }
+  header { padding:18px 24px; background:#0b1220; border-bottom:1px solid #243140; display:flex; align-items:center; gap:12px; }
+  header h1 { font-size:18px; margin:0; }
+  .dot { width:10px; height:10px; border-radius:50%; background:var(--muted); }
+  .dot.on { background:var(--ok); }
+  main { padding:24px; display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); max-width:1100px; margin:0 auto; }
+  .card { background:var(--card); border-radius:12px; padding:18px; border:1px solid #243140; }
+  .card .label { color:var(--muted); font-size:13px; text-transform:uppercase; letter-spacing:.04em; }
+  .card .value { font-size:34px; font-weight:700; margin-top:6px; }
+  .estado { grid-column:1/-1; display:flex; gap:24px; flex-wrap:wrap; }
+  .badge { padding:6px 14px; border-radius:999px; font-weight:600; font-size:14px; }
+  .normal { background:rgba(46,204,113,.15); color:var(--ok); }
+  .alerta { background:rgba(241,196,15,.15); color:var(--warn); }
+  .emergencia { background:rgba(231,76,60,.15); color:var(--emg); }
+  .log { grid-column:1/-1; }
+  .log h2 { font-size:15px; color:var(--muted); margin:0 0 10px; }
+  #eventos { list-style:none; margin:0; padding:0; max-height:320px; overflow:auto; font-family:ui-monospace,Consolas,monospace; font-size:13px; }
+  #eventos li { padding:7px 10px; border-bottom:1px solid #243140; }
+  #eventos li.alerta { color:var(--warn); }
+  #eventos li.emergencia { color:var(--emg); }
+</style>
+</head>
+<body>
+<header>
+  <div class="dot" id="conn"></div>
+  <h1>SafeHome Kitchen Monitor — Tiempo real</h1>
+</header>
+<main>
+  <div class="estado">
+    <span>Nivel: <span class="badge normal" id="nivel">—</span></span>
+    <span>Electrovalvula: <span class="badge normal" id="valvula">—</span></span>
+  </div>
+  <div class="card"><div class="label">Gas (MQ-2)</div><div class="value"><span id="gas">—</span> <small>ppm</small></div></div>
+  <div class="card"><div class="label">Temperatura (DHT22)</div><div class="value"><span id="temp">—</span> <small>&deg;C</small></div></div>
+  <div class="card"><div class="label">Presencia (PIR)</div><div class="value" id="pir">—</div></div>
+  <div class="log">
+    <h2>Eventos</h2>
+    <ul id="eventos"></ul>
+  </div>
+</main>
+<script>
+  const $ = (id) => document.getElementById(id);
+  function setBadge(el, nivel) { el.className = "badge " + (nivel || "normal"); el.textContent = nivel; }
+
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  const ws = new WebSocket(`${proto}://${location.host}/ws/dashboard`);
+
+  ws.onopen = () => $("conn").classList.add("on");
+  ws.onclose = () => $("conn").classList.remove("on");
+
+  ws.onmessage = (ev) => {
+    const m = JSON.parse(ev.data);
+    if (m.tipo === "telemetria") {
+      $("gas").textContent = m.gas_ppm;
+      $("temp").textContent = m.temperatura;
+      $("pir").textContent = m.presencia ? "Detectada" : "Sin actividad";
+      setBadge($("nivel"), m.nivel_alerta);
+      setBadge($("valvula"), m.estado_valvula === "cerrada" ? "emergencia" : "normal");
+      $("valvula").textContent = m.estado_valvula;
+
+      const li = document.createElement("li");
+      li.className = m.nivel_alerta;
+      const hora = new Date(m.timestamp).toLocaleTimeString();
+      let txt = `${hora}  gas=${m.gas_ppm}ppm temp=${m.temperatura}C nivel=${m.nivel_alerta}`;
+      if (m.alertas && m.alertas.length) txt += "  | " + m.alertas.map(a => a.mensaje).join(" ");
+      li.textContent = txt;
+      const lista = $("eventos");
+      lista.prepend(li);
+      while (lista.children.length > 100) lista.removeChild(lista.lastChild);
+    } else if (m.tipo === "valvula") {
+      $("valvula").textContent = m.estado_valvula;
+      const li = document.createElement("li");
+      li.textContent = `${new Date().toLocaleTimeString()}  Control manual: valvula ${m.accion} -> ${m.estado_valvula}`;
+      $("eventos").prepend(li);
+    }
+  };
+</script>
+</body>
+</html>
