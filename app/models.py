@@ -27,9 +27,10 @@ class Dispositivo(SQLModel, table=True):
 class Umbral(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     dispositivo_id: int = Field(foreign_key="dispositivo.id", index=True, unique=True)
-    gas_alerta: float = 400
-    gas_emergencia: float = 800
-    temp_max: float = 60
+    gas_alerta: float = 1000
+    gas_emergencia: float = 2000
+    temp_warning: float = 55
+    temp_max: float = 70
 
 
 class Lectura(SQLModel, table=True):

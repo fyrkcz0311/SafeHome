@@ -21,6 +21,7 @@ def get_or_create_umbral(session: Session, dispositivo_id: int) -> Umbral:
             dispositivo_id=dispositivo_id,
             gas_alerta=settings.gas_alerta_default,
             gas_emergencia=settings.gas_emergencia_default,
+            temp_warning=settings.temp_warning_default,
             temp_max=settings.temp_max_default,
         )
         session.add(umbral)
@@ -33,5 +34,6 @@ def umbral_a_dataclass(umbral: Umbral) -> Umbrales:
     return Umbrales(
         gas_alerta=umbral.gas_alerta,
         gas_emergencia=umbral.gas_emergencia,
+        temp_warning=umbral.temp_warning,
         temp_max=umbral.temp_max,
     )

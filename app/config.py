@@ -9,10 +9,11 @@ class Settings(BaseSettings):
     app_name: str = "SafeHome Kitchen Monitor API"
     database_url: str = "sqlite:///./safehome.db"
 
-    # Umbrales por defecto (documento, seccion 9.3 Modulo 1).
-    gas_alerta_default: float = 400
-    gas_emergencia_default: float = 800
-    temp_max_default: float = 60
+    # Umbrales por defecto (circuit.md).
+    gas_alerta_default: float = 1000
+    gas_emergencia_default: float = 2000
+    temp_warning_default: float = 55
+    temp_max_default: float = 70
 
 
 settings = Settings()

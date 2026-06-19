@@ -10,6 +10,8 @@ class TelemetriaIn(BaseModel):
     gas_ppm: float = Field(ge=0)
     temperatura: float
     presencia: bool = False
+    valve_open: bool | None = None
+    alarm_enabled: bool | None = None
 
 
 class ComandoOut(BaseModel):
@@ -82,6 +84,7 @@ class ValvulaIn(BaseModel):
 class UmbralIn(BaseModel):
     gas_alerta: float | None = None
     gas_emergencia: float | None = None
+    temp_warning: float | None = None
     temp_max: float | None = None
 
 
@@ -89,4 +92,5 @@ class UmbralOut(BaseModel):
     dispositivo_id: int
     gas_alerta: float
     gas_emergencia: float
+    temp_warning: float
     temp_max: float

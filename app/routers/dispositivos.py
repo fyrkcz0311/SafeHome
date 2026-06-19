@@ -89,12 +89,9 @@ async def controlar_valvula(
     if datos.accion == "cerrar":
         dispositivo.estado_valvula = "cerrada"
         dispositivo.comando_valvula = "cerrar"
-        dispositivo.comando_buzzer = True
     elif datos.accion == "reactivar":
         dispositivo.estado_valvula = "abierta"
         dispositivo.comando_valvula = "abrir"
-        dispositivo.comando_buzzer = False
-        dispositivo.nivel_alerta = "normal"
     else:
         raise HTTPException(status_code=400, detail="Accion invalida (use 'cerrar' o 'reactivar')")
 
@@ -135,6 +132,8 @@ def configurar_umbrales(
         umbral.gas_alerta = datos.gas_alerta
     if datos.gas_emergencia is not None:
         umbral.gas_emergencia = datos.gas_emergencia
+    if datos.temp_warning is not None:
+        umbral.temp_warning = datos.temp_warning
     if datos.temp_max is not None:
         umbral.temp_max = datos.temp_max
     session.add(umbral)

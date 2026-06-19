@@ -29,17 +29,23 @@ def asegurar_dispositivo(api: str, device_id: int) -> int:
 
 
 def generar_lectura(t: int) -> dict:
-    """Genera una lectura. Cada ~15 ciclos provoca un pico de gas."""
+    """Genera una lectura. Cada ~15 ciclos provoca un pico que activa los
+    umbrales de circuit.md (gas: alerta >=1000, emergencia >=2000;
+    temperatura: warning >=55 C, danger >=70 C solo sin presencia)."""
     gas = random.uniform(80, 250)
     temp = random.uniform(22, 35)
     presencia = random.random() < 0.6
 
     if t % 15 == 0 and t > 0:
-        gas = random.uniform(820, 1200)   # emergencia
+        gas = random.uniform(2000, 3000)  # emergencia (>=2000 ppm)
         print("[sim] >> Inyectando pico de EMERGENCIA de gas")
     elif t % 7 == 0 and t > 0:
-        gas = random.uniform(420, 600)    # alerta
+        gas = random.uniform(1000, 1800)  # alerta (>=1000 ppm)
         print("[sim] >> Inyectando nivel de ALERTA de gas")
+    elif t % 11 == 0 and t > 0:
+        temp = random.uniform(70, 85)     # danger por temperatura
+        presencia = False
+        print("[sim] >> Inyectando pico de temperatura (DANGER, sin presencia)")
 
     return {"gas_ppm": round(gas, 1), "temperatura": round(temp, 1), "presencia": presencia}
 
@@ -59,15 +65,23 @@ def main() -> int:
 
     print(f"[sim] Enviando telemetria a {args.api} (device {device_id}). Ctrl+C para parar.")
     t = 0
+    valve_open = True
     try:
         while True:
             lectura = generar_lectura(t)
             payload = {"device_id": device_id, **lectura}
+            # Reportar el estado actual de la valvula al API.
+            payload["valve_open"] = valve_open
             try:
                 r = httpx.post(f"{args.api}/api/telemetria", json=payload, timeout=5)
                 r.raise_for_status()
                 body = r.json()
                 cmd = body["comando"]
+                # Sincronizar estado local segun comando recibido.
+                if cmd["valvula"] == "cerrar":
+                    valve_open = False
+                elif cmd["valvula"] == "abrir":
+                    valve_open = True
                 print(
                     f"[sim] gas={lectura['gas_ppm']:>6} ppm  temp={lectura['temperatura']:>4} C  "
                     f"-> nivel={body['nivel_alerta']:<10} valvula={body['estado_valvula']:<8} "

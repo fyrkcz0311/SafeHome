@@ -13,8 +13,10 @@ def test_crear_y_listar_dispositivo(client):
 
 def test_umbrales_por_defecto(client, dispositivo):
     u = client.get(f"/api/dispositivos/{dispositivo}/umbrales").json()
-    assert u["gas_alerta"] == 400
-    assert u["gas_emergencia"] == 800
+    assert u["gas_alerta"] == 1000
+    assert u["gas_emergencia"] == 2000
+    assert u["temp_warning"] == 55
+    assert u["temp_max"] == 70
 
 
 def test_configurar_umbrales_cambia_comportamiento(client, dispositivo):
@@ -34,7 +36,7 @@ def test_cerrar_y_reactivar_valvula(client, dispositivo):
     # Forzar emergencia -> valvula cerrada.
     client.post(
         "/api/telemetria",
-        json={"device_id": dispositivo, "gas_ppm": 900, "temperatura": 25, "presencia": True},
+        json={"device_id": dispositivo, "gas_ppm": 2500, "temperatura": 25, "presencia": True},
     )
     estado = client.get(f"/api/dispositivos/{dispositivo}/estado").json()
     assert estado["estado_valvula"] == "cerrada"
@@ -54,7 +56,7 @@ def test_accion_valvula_invalida(client, dispositivo):
 def test_comando_polling(client, dispositivo):
     client.post(
         "/api/telemetria",
-        json={"device_id": dispositivo, "gas_ppm": 900, "temperatura": 25, "presencia": True},
+        json={"device_id": dispositivo, "gas_ppm": 2500, "temperatura": 25, "presencia": True},
     )
     cmd = client.get(f"/api/dispositivos/{dispositivo}/comando").json()
     assert cmd["valvula"] == "cerrar"

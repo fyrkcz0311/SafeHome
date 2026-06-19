@@ -34,7 +34,7 @@ def test_lectura_normal_se_persiste_y_no_alerta(client, dispositivo):
 
 
 def test_emergencia_cierra_valvula_y_crea_alerta(client, dispositivo):
-    r = _post(client, dispositivo, 900, 30)
+    r = _post(client, dispositivo, 2500, 30)
     assert r.status_code == 200
     body = r.json()
     assert body["nivel_alerta"] == "emergencia"
@@ -48,7 +48,7 @@ def test_emergencia_cierra_valvula_y_crea_alerta(client, dispositivo):
 
 
 def test_alerta_de_gas_no_cierra_valvula(client, dispositivo):
-    r = _post(client, dispositivo, 500, 25)
+    r = _post(client, dispositivo, 1500, 25)
     body = r.json()
     assert body["nivel_alerta"] == "alerta"
     assert body["estado_valvula"] == "abierta"
@@ -57,8 +57,8 @@ def test_alerta_de_gas_no_cierra_valvula(client, dispositivo):
 
 def test_estado_refleja_ultima_lectura(client, dispositivo):
     _post(client, dispositivo, 120, 22)
-    _post(client, dispositivo, 850, 28)
+    _post(client, dispositivo, 2500, 28)
     estado = client.get(f"/api/dispositivos/{dispositivo}/estado").json()
     assert estado["nivel_alerta"] == "emergencia"
     assert estado["estado_valvula"] == "cerrada"
-    assert estado["ultima_lectura"]["gas_ppm"] == 850
+    assert estado["ultima_lectura"]["gas_ppm"] == 2500

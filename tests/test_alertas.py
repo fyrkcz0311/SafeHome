@@ -3,7 +3,7 @@
 from app.services.alertas import Umbrales, evaluar_lectura
 
 
-UMBRALES = Umbrales(gas_alerta=400, gas_emergencia=800, temp_max=60)
+UMBRALES = Umbrales(gas_alerta=400, gas_emergencia=800, temp_warning=55, temp_max=70)
 
 
 def test_lectura_normal_no_genera_alertas():
@@ -33,10 +33,24 @@ def test_gas_en_umbral_de_emergencia_cierra_valvula():
     assert res.comando.buzzer is True
 
 
-def test_temperatura_alta_genera_alerta():
-    res = evaluar_lectura(gas_ppm=100, temperatura=65, presencia=True, umbrales=UMBRALES)
+def test_temperatura_alta_sin_presencia_genera_alerta():
+    res = evaluar_lectura(gas_ppm=100, temperatura=65, presencia=False, umbrales=UMBRALES)
     assert res.nivel == "alerta"
     assert any(a.tipo == "temperatura" for a in res.alertas)
+
+
+def test_temperatura_alta_con_presencia_no_alerta():
+    res = evaluar_lectura(gas_ppm=100, temperatura=65, presencia=True, umbrales=UMBRALES)
+    assert res.nivel == "normal"
+    assert res.alertas == []
+
+
+def test_temperatura_muy_alta_sin_presencia_cierra_valvula():
+    res = evaluar_lectura(gas_ppm=100, temperatura=75, presencia=False, umbrales=UMBRALES)
+    assert res.nivel == "emergencia"
+    assert any(a.tipo == "temperatura" and a.nivel == "emergencia" for a in res.alertas)
+    assert res.comando.valvula == "cerrar"
+    assert res.comando.buzzer is True
 
 
 def test_limite_exacto_de_emergencia_es_emergencia():
@@ -51,7 +65,7 @@ def test_limite_exacto_de_alerta_es_alerta():
 
 
 def test_gas_emergencia_tiene_prioridad_sobre_temperatura():
-    res = evaluar_lectura(gas_ppm=900, temperatura=70, presencia=True, umbrales=UMBRALES)
+    res = evaluar_lectura(gas_ppm=900, temperatura=75, presencia=False, umbrales=UMBRALES)
     assert res.nivel == "emergencia"
     assert res.comando.valvula == "cerrar"
     # Debe registrar ambas alertas.

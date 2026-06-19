@@ -56,6 +56,13 @@ async def recibir_telemetria(
         )
 
     # 4. Actualizar estado del dispositivo.
+    #    Sincronizar desde lo que el circuito reporta (botones fisicos, accion local).
+    #    La evaluacion de la API puede sobreescribir por seguridad.
+    if datos.valve_open is not None:
+        dispositivo.estado_valvula = "abierta" if datos.valve_open else "cerrada"
+    if datos.alarm_enabled is not None:
+        dispositivo.comando_buzzer = datos.alarm_enabled
+
     dispositivo.nivel_alerta = resultado.nivel
     dispositivo.last_seen = datetime.now(timezone.utc)
     dispositivo.comando_valvula = resultado.comando.valvula
