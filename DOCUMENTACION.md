@@ -1,8 +1,5 @@
-# Cómo está hecho — SafeHome Kitchen Monitor API
+# Documentacion
 
-Este documento explica **cómo se construyó** la API: las decisiones de diseño, la
-arquitectura, el flujo de datos y qué hace cada archivo. Para instrucciones de uso
-(instalar y ejecutar) ver el [README.md](README.md).
 
 > **Especificaciones que sigue la API**
 > - [circuit.md](circuit.md) — comportamiento del circuito ESP32 (estados, umbrales, actuadores).
@@ -214,11 +211,3 @@ Suite con `pytest`. En la última ejecución: **19 pasan, 1 falla**.
   inconsistencia entre el test y el código tras los últimos cambios: hay que decidir cuál
   refleja el comportamiento deseado (resetear el nivel al reabrir, o no).
 
----
-
-## 10. Qué quedó para más adelante
-
-MQTT, PostgreSQL, persistencia de humedad, notificaciones push (Firebase), el registro de
-**eventos** (`AUTO_VALVE_CLOSED`, `VALVE_OPENED_MANUALLY`, etc. de `circuit.md`) y el
-módulo de BI (perfiles de uso y detección de anomalías con Z-score). La organización por
-*routers* y *services* deja sitio para añadir estas piezas sin reescribir lo existente.
